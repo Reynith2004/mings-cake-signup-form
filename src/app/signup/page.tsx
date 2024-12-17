@@ -1,134 +1,130 @@
-"use client"
+// app/signup/page.tsx
+"use client";
+import React, { useState, ChangeEvent, FormEvent } from "react";
+import { useRouter } from "next/navigation";
+import MainLayouts from "@/components/layout/MainLayouts";
+import { signIn } from "next-auth/react";  // Import signIn from NextAuth
 
-import React, { useState } from "react";
-import bcrypt from "bcryptjs";
+interface FormData {
+  firstname: string;
+  lastname: string;
+  email: string;
+  password: string;
+}
 
-const SignupForm: React.FC = () => {
-  const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    password: ''
+const SignupPage: React.FC = () => {
+  const [formData, setFormData] = useState<FormData>({
+    firstname: "",
+    lastname: "",
+    email: "",
+    password: "",
   });
+  const [message, setMessage] = useState<string>("");
 
-  const [error, setError] = useState<string | null>(null);
-  const [successMessage, setSuccessMessage] = useState<string | null>(null);
-  const [passwordVisible, setPasswordVisible] = useState(false); // State for showing/hiding password
+  const router = useRouter();
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
-
-    setError(null);
-    setSuccessMessage(null);
-
     try {
-      // Hash the password before displaying it
-      const hashedPassword = bcrypt.hashSync(formData.password, 10);
-
-      // Show the hashed password in the form input (for display purposes only)
-      console.log('Hashed password:', hashedPassword);
-
-      // Prepare form data with raw password for submission to backend
-      const rawPassword = formData.password;
-
-      const response = await fetch('/api/signup', {
-        method: 'POST',
+      const res = await fetch("/api/signup", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          ...formData,
-          password: rawPassword, // Send raw password to backend
-        }),
+        body: JSON.stringify(formData),
       });
 
-      const result = await response.json();
-
-      if (response.ok) {
-        setSuccessMessage(result.message || 'User registered successfully');
-        setFormData({ name: '', email: '', password: '' });
-      } else {
-        setError(result.error || 'Something went wrong');
+      if (!res.ok) {
+        setMessage("Signup failed.");
+        return;
       }
-    } catch (error) {
-      setError('An error occurred while submitting the form.');
+
+      setMessage("User signup successful!");
+      router.push("/login");
+    } catch (error: unknown) {
+      setMessage("An unexpected error occurred.");
     }
   };
 
+  // Google login handler using NextAuth
+  const handleGoogleLogin = () => {
+    signIn("google");  // This triggers Google login and account picker
+  };
+
   return (
-    <div className="flex justify-center items-center h-screen bg-gray-100">
-      <form onSubmit={handleSubmit} className="bg-white p-8 rounded-lg shadow-lg w-full max-w-md">
-        <h2 className="text-2xl font-semibold text-gray-800 text-center mb-6">Sign Up</h2>
-
-        {error && <div className="text-red-500 mb-4">{error}</div>}
-        {successMessage && <div className="text-green-500 mb-4">{successMessage}</div>}
-
-        <div className="mb-4">
-          <label htmlFor="name" className="block text-gray-700 font-medium mb-2">
-            Name
-          </label>
-          <input
-            type="text"
-            id="name"
-            name="name"
-            value={formData.name}
-            onChange={handleChange}
-            className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            required
-          />
-        </div>
-
-        <div className="mb-4">
-          <label htmlFor="email" className="block text-gray-700 font-medium mb-2">
-            Email
-          </label>
-          <input
-            type="email"
-            id="email"
-            name="email"
-            value={formData.email}
-            onChange={handleChange}
-            className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            required
-          />
-        </div>
-
-        <div className="mb-6">
-          <label htmlFor="password" className="block text-gray-700 font-medium mb-2">
-            Password
-          </label>
-          <div className="relative">
+    <MainLayouts>
+      <div
+        className="relative min-h-screen bg-cover bg-center flex items-center justify-center"
+        style={{
+          backgroundImage:
+            'url("https://images.unsplash.com/photo-1653821355736-0c2598d0a63e?fm=jpg&q=60&w=3000&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Nnx8ZXZlbnQlMjBwbGFubmluZ3xlbnwwfHwwfHx8MA%3D%3D")',
+        }}
+      >
+        <div className="absolute inset-0 bg-black opacity-50"></div>
+        <div className="relative z-10 bg-white bg-opacity-90 p-10 rounded-lg shadow-lg max-w-sm w-full">
+          <h1 className="text-3xl font-bold text-center text-gray-800 mb-6">Sign Up</h1>
+          <form className="space-y-4" onSubmit={handleSubmit}>
             <input
-              type={passwordVisible ? "text" : "password"} // Toggle between text and password input type
-              id="password"
-              name="password"
-              value={formData.password}
+              type="text"
+              name="firstname"
+              placeholder="First Name"
+              className="border p-2 w-full mb-2"
               onChange={handleChange}
-              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              required
+            />
+            <input
+              type="text"
+              name="lastname"
+              placeholder="Last Name"
+              className="border p-2 w-full mb-2"
+              onChange={handleChange}
+              required
+            />
+            <input
+              type="email"
+              name="email"
+              placeholder="Email"
+              className="border p-2 w-full mb-2"
+              onChange={handleChange}
+              required
+            />
+            <input
+              type="password"
+              name="password"
+              placeholder="Password"
+              className="border p-2 w-full mb-2"
+              onChange={handleChange}
               required
             />
             <button
-              type="button"
-              onClick={() => setPasswordVisible(!passwordVisible)} // Toggle password visibility
-              className="absolute right-3 top-3 text-gray-500"
+              type="submit"
+              className="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-2 px-4 rounded-lg shadow-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
             >
-              {passwordVisible ? 'Hide' : 'Show'}
+              Sign Up
             </button>
-          </div>
-        </div>
+          </form>
 
-        <button
-          type="submit"
-          className="w-full bg-blue-500 text-white font-medium py-2 rounded-md hover:bg-blue-600 transition duration-200"
-        >
-          Sign Up
-        </button>
-      </form>
-    </div>
+          {message && (
+            <p className="text-center text-sm text-red-500 mt-4">{message}</p>
+          )}
+          <p className="text-center text-sm text-gray-600 mt-4">
+            Already have an account?{" "}
+            <button
+              type="button"
+              className="text-indigo-600 hover:underline"
+              onClick={() => router.push("/login")}
+            >
+              Log in
+            </button>
+          </p>
+        </div>
+      </div>
+    </MainLayouts>
   );
 };
 
-export default SignupForm;
+export default SignupPage;

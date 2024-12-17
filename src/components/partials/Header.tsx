@@ -1,32 +1,66 @@
-import React from "react";
-import Link from "next/link";
+import React, { useState, useEffect } from "react";
+import { FaUser } from "react-icons/fa";
+import { useRouter } from "next/navigation";
 
 const Header: React.FC = () => {
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const router = useRouter();
+
+  useEffect(() => {
+    const loggedIn = localStorage.getItem("isLoggedIn") === "true";
+    setIsLoggedIn(loggedIn);
+  }, []);
+
+  const handleLogout = () => {
+    localStorage.removeItem("isLoggedIn");
+    localStorage.removeItem("role");
+    localStorage.removeItem("token");
+    setIsLoggedIn(false);
+    setDropdownOpen(false);
+    router.push("/login");
+  };
+
+  const toggleDropdown = () => {
+    setDropdownOpen((prev) => !prev);
+  };
+
   return (
-    <header className="bg-[#EDDFE0] text-white p-4 shadow-md">
+    <header className="w-full bg-[#EDDFE0] text-white p-8 shadow-md">
       <div className="container mx-auto flex justify-between items-center">
-        <h1 className="text-2xl font-bold text-gray-800">Ming's Cake</h1>
+        <h1 className="text-3xl font-bold text-gray-800">Event Tracker</h1>
         <nav>
           <ul className="flex space-x-4">
-            <li>
-              <Link href="/" className="text-gray-600 hover:text-gray-500">
-                Home
-              </Link>
-            </li>
-            <li>
-              <Link href="/about" className="text-gray-600 hover:text-gray-500">
-                About
-              </Link>
-            </li>
-            <li>
-              <Link href="/contact" className="text-gray-600 hover:text-gray-500">
-                Contact Us
-              </Link>
-            </li>
-            <li>
-              <Link href="/signup" className="text-gray-600 hover:text-gray-500">
-                Sign Up
-              </Link>
+            <li className="relative">
+              {isLoggedIn ? (
+                <div className="relative">
+                  <button
+                    onClick={toggleDropdown}
+                    className="flex items-center text-gray-600 hover:text-gray-500 focus:outline-none"
+                  >
+                    <FaUser className="text-3xl" />
+                  </button>
+                  {dropdownOpen && (
+                    <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg z-10">
+                      <ul className="py-2 text-gray-800">
+                        <li
+                          className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
+                          onClick={handleLogout}
+                        >
+                          Logout
+                        </li>
+                      </ul>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <a
+                  href="/signup"
+                  className="text-gray-600 hover:text-gray-500 flex items-center"
+                >
+                  <FaUser className="text-3xl" />
+                </a>
+              )}
             </li>
           </ul>
         </nav>

@@ -1,12 +1,12 @@
+// pages/api/signup.ts
 import { NextApiRequest, NextApiResponse } from 'next';
 import mysql from 'mysql2/promise';
 
-// Database configuration
 const dbConfig = {
   host: 'localhost',
   user: 'root',
   password: '',
-  database: 'my_db',  // Database name changed to 'my_db'
+  database: 'my_db',
 };
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
@@ -14,17 +14,18 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const { name, email, password } = req.body;
+  const { firstname, lastname, email, password } = req.body;
 
-  // Basic validation
-  if (!name || !email || !password) {
+  // Validate input fields
+  if (!firstname || !lastname || !email || !password) {
     return res.status(400).json({ error: 'Please fill out all fields correctly' });
   }
 
   try {
+    // Connect to the database
     const connection = await mysql.createConnection(dbConfig);
 
-    // Check if the email already exists in the users table
+    // Check if the email already exists in the database
     const [existingUser] = await connection.query(
       'SELECT * FROM users WHERE email = ?',
       [email]
@@ -34,16 +35,16 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.status(400).json({ error: 'Email is already in use' });
     }
 
-    // Insert new user into the 'users' table (with name, email, and password)
+    // Insert the new user into the database (password is stored as plain text)
     await connection.query(
-      'INSERT INTO users (name, email, password) VALUES (?, ?, ?)',  // Removed confirmPassword from insert query
-      [name, email, password]  // Storing name, email, and password only
+      'INSERT INTO users (firstname, lastname, email, password) VALUES (?, ?, ?, ?)',
+      [firstname, lastname, email, password]
     );
 
     connection.end();
     res.status(201).json({ message: 'User registered successfully' });
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: 'Database connection error' });
+    console.error('Error during signup:', error); // Add more detailed error logging
+    res.status(500).json({ error: 'Database connection error or query failure' });
   }
 }
